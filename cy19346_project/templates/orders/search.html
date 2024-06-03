@@ -1,0 +1,20 @@
+<!-- /Users/mihailsavic/PycharmProjects/cy19346/cy19346/cy19346_project/templates/orders/search.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+    {% if orders %}
+        <ul>
+            {% for order in orders %}
+                <li>Order ID: {{ order.order_id }}, Product: {{ order.product_name }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No orders found.</p>
+    {% endif %}
+</body>
+</html>

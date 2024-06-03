@@ -1,0 +1,18 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Orders</title>
+</head>
+<body>
+    <h1>Search Orders</h1>
+    <form method="get" action="{% url 'search_orders' %}">
+        <label for="customer_id">Enter Customer ID:</label>
+        <input type="text" id="customer_id" name="customer_id" required>
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html>
