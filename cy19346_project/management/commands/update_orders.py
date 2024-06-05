@@ -1,8 +1,8 @@
-# /Users/mihailsavic/PycharmProjects/cy19346/cy19346/cy19346_project/management/commands/update_orders.py
 import requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from cy19346_project.models import Order, APIKey
+import pytz
 
 
 class Command(BaseCommand):
@@ -16,20 +16,28 @@ class Command(BaseCommand):
             "Content-Type": "application/json"
         }
         today = datetime.utcnow()
-        yesterday = today - timedelta(days=1)
+        thirty_days_ago = today - timedelta(days=30)
         data = {
             "dir": "ASC",
             "filter": {
-                "since": yesterday.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "since": thirty_days_ago.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "to": today.strftime('%Y-%m-%dT%H:%M:%SZ')
             },
-            "limit": 50,
+            "limit": 100,
             "offset": 0,
             "translit": False,
-            "with": {"analytics_data": False, "financial_data": False}
+            "with": {"analytics_data": True, "financial_data": True}
         }
+
+        self.stdout.write(f"Request URL: {url}")
+        self.stdout.write(f"Request Headers: {headers}")
+        self.stdout.write(f"Request Payload: {data}")
+
         response = requests.post(url, headers=headers, json=data)
+        self.stdout.write(f"Status Code: {response.status_code}")
+
         if response.status_code == 200:
+            self.stdout.write(f"Response: {response.json()}")
             return response.json()
         else:
             self.stderr.write(f"Ошибка: {response.status_code} - {response.text}")
@@ -40,43 +48,46 @@ class Command(BaseCommand):
             api_key_obj = APIKey.objects.get(marketplace='Ozon')
             client_id = api_key_obj.client_id
             api_key = api_key_obj.api_key
+            self.stdout.write(f"Client ID: {client_id}")
+            self.stdout.write(f"API Key: {api_key}")
             orders = self.fetch_ozon_orders(client_id, api_key)
             if orders:
                 self.update_orders_in_db(orders)
+            else:
+                self.stdout.write(self.style.WARNING("No orders found in the API response"))
         except APIKey.DoesNotExist:
             self.stderr.write("API Key for Ozon not found")
 
     def update_orders_in_db(self, orders):
+        utc = pytz.UTC
         for order in orders['result']:
+            self.stdout.write(f"Processing order {order['order_id']}")
             for product in order['products']:
-                created_at = datetime.strptime(order['created_at'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-                in_process_at = datetime.strptime(order['in_process_at'], '%Y-%m-%dT%H:%M:%SZ').replace(
-                    tzinfo=timezone.utc)
-                shipment_date = datetime.strptime(order['shipment_date'], '%Y-%m-%dT%H:%M:%SZ').replace(
-                    tzinfo=timezone.utc)
-
+                self.stdout.write(f"Processing product {product['sku']} for order {order['order_id']}")
                 order_instance, created = Order.objects.update_or_create(
                     order_id=order['order_id'],
-                    sku=product['sku'],
+                    sku=product['sku'],  # Add more fields to uniquely identify the order
                     defaults={
-                        'order_number': order.get('order_number'),
-                        'posting_number': order.get('posting_number'),
-                        'status': order.get('status'),
-                        'cancel_reason_id': order.get('cancel_reason_id'),
-                        'created_at': created_at,
-                        'in_process_at': in_process_at,
-                        'shipment_date': shipment_date,
+                        'posting_number': order.get('posting_number', ''),
+                        'status': order.get('status', ''),
+                        'cancel_reason_id': order.get('cancel_reason_id', ''),
+                        'created_at': utc.localize(datetime.strptime(order['created_at'], '%Y-%m-%dT%H:%M:%SZ')),
+                        'in_process_at': utc.localize(datetime.strptime(order['in_process_at'], '%Y-%m-%dT%H:%M:%SZ')),
+                        'shipment_date': utc.localize(datetime.strptime(order['shipment_date'], '%Y-%m-%dT%H:%M:%SZ')),
                         'product_name': product['name'],
                         'quantity': product['quantity'],
-                        'offer_id': product.get('offer_id'),
-                        'price': product.get('price'),
+                        'offer_id': product.get('offer_id', ''),
+                        'price': product.get('price', 0),
                         'mandatory_mark': ','.join(product.get('mandatory_mark', [])),
-                        'barcodes': order.get('barcodes'),
-                        'analytics_data': str(order.get('analytics_data')),
-                        'financial_data': str(order.get('financial_data'))
+                        'barcodes': order.get('barcodes', ''),
+                        'analytics_data': str(order.get('analytics_data', '')),
+                        'financial_data': str(order.get('financial_data', '')),
+                        'is_fraud': False  # Example default value
                     }
                 )
                 if created:
-                    self.stdout.write(f"Created order {order['order_id']} - product {product['sku']}")
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Created new order {order['order_id']} - product {product['sku']}"))
                 else:
-                    self.stdout.write(f"Updated order {order['order_id']} - product {product['sku']}")
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Updated order {order['order_id']} - product {product['sku']}"))

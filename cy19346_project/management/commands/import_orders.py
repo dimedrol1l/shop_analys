@@ -15,17 +15,17 @@ class Command(BaseCommand):
             "Content-Type": "application/json"
         }
         today = datetime.utcnow()
-        yesterday = today - timedelta(days=1)
+        thirty_days_ago = today - timedelta(days=30)  # Изменим на более длинный период
         data = {
             "dir": "ASC",
             "filter": {
-                "since": yesterday.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                "since": thirty_days_ago.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "to": today.strftime('%Y-%m-%dT%H:%M:%SZ')
             },
-            "limit": 50,
+            "limit": 100,  # Увеличим лимит
             "offset": 0,
             "translit": False,
-            "with": {"analytics_data": False, "financial_data": False}
+            "with": {"analytics_data": True, "financial_data": True}
         }
         response = requests.post(url, headers=headers, json=data)
         if response.status_code == 200:
@@ -53,7 +53,6 @@ class Command(BaseCommand):
             for product in order['products']:
                 order_instance = Order(
                     order_id=order['order_id'],
-                    order_number=order.get('order_number'),
                     posting_number=order.get('posting_number'),
                     status=order.get('status'),
                     cancel_reason_id=order.get('cancel_reason_id'),

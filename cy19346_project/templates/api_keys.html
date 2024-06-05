@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>API Keys</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add Key</button>
+  </form>
+  <h2>Existing Keys</h2>
+  <ul>
+    {% for key in keys %}
+      <li>{{ key.marketplace }} - {{ key.api_key }} - {{ key.client_id }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
