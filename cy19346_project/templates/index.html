@@ -1,18 +1,28 @@
-<!-- templates/index.html -->
+<!-- cy19346_project/templates/index.html -->
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Orders</title>
+    <title>Home</title>
+    <style>
+        nav {
+            background-color: #f8f8f8;
+            padding: 10px;
+        }
+        nav a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1>Search Orders</h1>
-    <form method="get" action="{% url 'search_orders' %}">
-        <label for="customer_id">Enter Customer ID:</label>
-        <input type="text" id="customer_id" name="customer_id" required>
-        <button type="submit">Search</button>
-    </form>
+    <nav>
+        <a href="{% url 'index' %}">Home</a>
+        <a href="{% url 'search_orders' %}">Search Orders</a>
+    </nav>
+    <h1>Welcome to the Order Management System</h1>
 </body>
 </html>

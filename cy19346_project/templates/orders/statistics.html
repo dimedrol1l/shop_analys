@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Order Statistics</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Customer ID</th>
+            <th>Total Orders</th>
+            <th>Received Orders</th>
+            <th>Cancelled Orders</th>
+            <th>Returned Orders</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in stats %}
+        <tr>
+            <td>{{ stat.customer_id }}</td>
+            <td>{{ stat.total_orders }}</td>
+            <td>{{ stat.received_orders }}</td>
+            <td>{{ stat.cancelled_orders }}</td>
+            <td>{{ stat.returned_orders }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

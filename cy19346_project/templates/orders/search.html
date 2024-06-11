@@ -1,20 +1,58 @@
-<!-- /Users/mihailsavic/PycharmProjects/cy19346/cy19346/cy19346_project/templates/orders/search.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Search Results</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Orders</title>
+    <style>
+        nav {
+            background-color: #f8f8f8;
+            padding: 10px;
+        }
+        nav a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #333;
+        }
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
-    <h1>Search Results</h1>
-    {% if orders %}
+    <nav>
+        <a href="{% url 'index' %}">Home</a>
+        <a href="{% url 'search_orders' %}">Search Orders</a>
+    </nav>
+    <h1>Search Orders</h1>
+    <form method="get">
+        <label for="posting_number">Enter Posting Number:</label>
+        <input type="text" id="posting_number" name="posting_number" value="{{ query|default_if_none:'' }}">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if query and results is None %}
+        <p class="error">Invalid posting number format. Please enter a valid posting number.</p>
+    {% endif %}
+
+    {% if results %}
+        <h2>Results:</h2>
         <ul>
-            {% for order in orders %}
-                <li>Order ID: {{ order.order_id }}, Product: {{ order.product_name }}</li>
+            {% for order in results %}
+                <li>
+                    <strong>Posting Number:</strong> {{ order.posting_number }}<br>
+                    <strong>SKU:</strong> {{ order.sku }}<br>
+                    <strong>Price:</strong> {{ order.price }}<br>
+                    <strong>Quantity:</strong> {{ order.quantity }}<br>
+                    <strong>Status:</strong> {{ order.status }}<br>
+                    {% if order.cancel_reason_id and order.cancel_reason_id != '0' %}
+                        <strong>Cancel Reason ID:</strong> {{ order.cancel_reason_id }}<br>
+                    {% endif %}
+                </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>No orders found.</p>
+        <p>No results found</p>
     {% endif %}
 </body>
 </html>
