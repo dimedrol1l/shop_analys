@@ -73,7 +73,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'cy19346.wsgi.application'
 
-
+LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 

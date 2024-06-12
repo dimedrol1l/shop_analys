@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
-from django.contrib.auth.forms import AuthenticationForm
-from .forms import SignUpForm
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Order
 import re
@@ -11,20 +10,20 @@ def index(request):
         return redirect('login')
     return render(request, 'index.html')
 
-
 def signup(request):
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+        form = UserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=password)
+            user = form.save()
             login(request, user)
             return redirect('index')
     else:
-        form = SignUpForm()
+        form = UserCreationForm()
     return render(request, 'signup.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    return redirect('index')
 
 @login_required
 def search_orders(request):
@@ -39,7 +38,6 @@ def search_orders(request):
             results = None
 
     return render(request, 'orders/search.html', {'results': results, 'query': query})
-
 
 @login_required
 def api_keys(request):
