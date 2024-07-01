@@ -1,14 +1,15 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 class APIKey(models.Model):
     marketplace = models.CharField(max_length=50)
     api_key = models.CharField(max_length=255)
     client_id = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'api_keys'  # Укажите существующее имя таблицы
-
 
 class Order(models.Model):
     order_id = models.CharField(max_length=100, unique=True)  # Уникальный идентификатор заказа
@@ -30,6 +31,14 @@ class Order(models.Model):
     is_fraud = models.BooleanField(default=False)
     customer_id = models.CharField(max_length=255, null=True, blank=True)  # Добавлен customer_id
     order_date = models.DateTimeField(null=True, blank=True)  # Добавлена дата заказа
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # Связь с пользователем
 
     class Meta:
         db_table = 'orders'
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
+    import_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.username

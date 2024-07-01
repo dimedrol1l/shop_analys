@@ -1,19 +1,3 @@
-"""
-URL configuration for cy19346 project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
@@ -27,5 +11,9 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('search/', views.search_orders, name='search_orders'),
     path('api_keys/', views.api_keys, name='api_keys'),
+    path('api_keys/edit/<int:pk>/', views.edit_api_key, name='edit_api_key'),
+    path('api_keys/delete/<int:pk>/', views.delete_api_key, name='delete_api_key'),
     path('order_statistics/', views.order_statistics, name='order_statistics'),
+    path('import_orders/', views.import_orders, name='import_orders'),
+    path('reset_import/', views.reset_import, name='reset_import'),
 ]

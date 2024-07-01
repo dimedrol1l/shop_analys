@@ -1,27 +1,55 @@
-{% extends "base.html" %}
-
-{% block content %}
-<h2>Order Statistics</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Customer ID</th>
-            <th>Total Orders</th>
-            <th>Received Orders</th>
-            <th>Cancelled Orders</th>
-            <th>Returned Orders</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for stat in stats %}
-        <tr>
-            <td>{{ stat.customer_id }}</td>
-            <td>{{ stat.total_orders }}</td>
-            <td>{{ stat.received_orders }}</td>
-            <td>{{ stat.cancelled_orders }}</td>
-            <td>{{ stat.returned_orders }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Statistics</title>
+        <style>
+        nav {
+            background-color: #f8f8f8;
+            padding: 10px;
+        }
+        nav a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #333;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'index' %}">Home</a>
+    </nav>
+    <h1>Order Statistics</h1>
+    <form method="get">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+        <button type="submit">Get Statistics</button>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Payment Type</th>
+                <th>Total Orders</th>
+                <th>Delivered Orders</th>
+                <th>Cancelled Orders</th>
+                <th>Returned Orders</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment_type, stats in stats.items %}
+            <tr>
+                <td>{{ payment_type }}</td>
+                <td>{{ stats.total_orders }}</td>
+                <td>{{ stats.delivered_orders }}</td>
+                <td>{{ stats.cancelled_orders }}</td>
+                <td>{{ stats.returned_orders }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

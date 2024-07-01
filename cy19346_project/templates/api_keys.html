@@ -1,16 +1,29 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
-  <h2>API Keys</h2>
+  <h1>API Keys</h1>
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Add Key</button>
+    <button type="submit">Save API Key</button>
   </form>
-  <h2>Existing Keys</h2>
+
+  <h2>Your API Keys</h2>
   <ul>
-    {% for key in keys %}
-      <li>{{ key.marketplace }} - {{ key.api_key }} - {{ key.client_id }}</li>
+    {% for key in user.apikey_set.all %}
+    <li>
+        {{ key.marketplace }}: {{ key.client_id }}
+        <a href="{% url 'edit_api_key' key.pk %}">Edit</a>
+        <a href="{% url 'delete_api_key' key.pk %}">Delete</a>
+    </li>
     {% endfor %}
   </ul>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 {% endblock %}

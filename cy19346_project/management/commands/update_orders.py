@@ -1,12 +1,27 @@
-# cy19346_project/management/commands/update_orders.py
-import requests
-from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from cy19346_project.models import Order, APIKey
+import requests
+from datetime import datetime, timedelta
 import pytz
 
 class Command(BaseCommand):
     help = 'Update orders from Ozon API'
+
+    def handle(self, *args, **options):
+        api_keys = APIKey.objects.all()
+        for api_key_obj in api_keys:
+            client_id = api_key_obj.client_id
+            api_key = api_key_obj.api_key
+            user = api_key_obj.user
+
+            self.stdout.write(f"Client ID: {client_id}")
+            self.stdout.write(f"API Key: {api_key}")
+
+            orders = self.fetch_ozon_orders(client_id, api_key)
+            if orders:
+                self.update_orders_in_db(orders, user)
+            else:
+                self.stdout.write(self.style.WARNING("No orders found in the API response"))
 
     def fetch_ozon_orders(self, client_id, api_key):
         url = "https://api-seller.ozon.ru/v2/posting/fbs/list"
@@ -34,49 +49,33 @@ class Command(BaseCommand):
             self.stderr.write(f"Error: {response.status_code} - {response.text}")
             return None
 
-    def handle(self, *args, **options):
-        try:
-            api_key_obj = APIKey.objects.get(marketplace='Ozon')
-            client_id = api_key_obj.client_id
-            api_key = api_key_obj.api_key
-            self.stdout.write(f"Client ID: {client_id}")
-            self.stdout.write(f"API Key: {api_key}")
-            orders = self.fetch_ozon_orders(client_id, api_key)
-            if orders:
-                self.update_orders_in_db(orders)
-            else:
-                self.stdout.write(self.style.WARNING("No orders found in the API response"))
-        except APIKey.DoesNotExist:
-            self.stderr.write("API Key for Ozon not found")
-
-    def update_orders_in_db(self, orders):
+    def update_orders_in_db(self, orders, user):
         utc = pytz.UTC
         for order in orders['result']:
             self.stdout.write(f"Processing order {order['order_id']}")
             for product in order['products']:
                 self.stdout.write(f"Processing product {product['sku']} for order {order['order_id']}")
-                order_instance, created = Order.objects.update_or_create(
+                Order.objects.update_or_create(
                     order_id=order['order_id'],
                     defaults={
                         'posting_number': order.get('posting_number', ''),
                         'status': order.get('status', ''),
                         'cancel_reason_id': order.get('cancel_reason_id', ''),
-                        'created_at': utc.localize(datetime.strptime(order['created_at'], '%Y-%m-%dT%H:%M:%SZ')),
-                        'in_process_at': utc.localize(datetime.strptime(order['in_process_at'], '%Y-%m-%dT%H:%M:%SZ')),
-                        'shipment_date': utc.localize(datetime.strptime(order['shipment_date'], '%Y-%m-%dT%H:%M:%SZ')),
+                        'created_at': utc.localize(datetime.strptime(order['created_at'], '%Y-%m-%dT%H:%M:%S%z')),
+                        'in_process_at': utc.localize(datetime.strptime(order['in_process_at'], '%Y-%m-%dT%H:%M:%S%z')),
+                        'shipment_date': utc.localize(datetime.strptime(order['shipment_date'], '%Y-%m-%dT%H:%M:%S%z')),
                         'sku': product['sku'],
-                        'product_name': product['name'],
-                        'quantity': product.get('quantity', 1),  # Ensure quantity is set to 1 if missing
+                        'product_name': product.get('name', ''),
+                        'quantity': product.get('quantity', 1),
                         'offer_id': product.get('offer_id', ''),
                         'price': product.get('price', 0),
-                        'mandatory_mark': ','.join(product.get('mandatory_mark', [])),
-                        'barcodes': order.get('barcodes', ''),
-                        'analytics_data': str(order.get('analytics_data', '')),
-                        'financial_data': str(order.get('financial_data', '')),
-                        'is_fraud': False  # Example default value
+                        'mandatory_mark': product.get('mandatory_mark', ''),
+                        'barcodes': ', '.join(product.get('barcodes', [])),
+                        'analytics_data': order.get('analytics_data', ''),
+                        'financial_data': order.get('financial_data', ''),
+                        'is_fraud': order.get('is_fraud', False),
+                        'customer_id': order.get('customer_id', ''),
+                        'order_date': utc.localize(datetime.strptime(order['order_date'], '%Y-%m-%dT%H:%M:%S%z')),
+                        'user': user
                     }
                 )
-                if created:
-                    self.stdout.write(self.style.SUCCESS(f"Created new order {order['order_id']} - product {product['sku']}"))
-                else:
-                    self.stdout.write(self.style.SUCCESS(f"Updated order {order['order_id']} - product {product['sku']}"))
